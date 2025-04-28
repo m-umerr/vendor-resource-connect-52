@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { resources as initialResources } from "@/data/mockVendorData";
 import Header from "@/components/Header";
@@ -8,9 +7,10 @@ import ResourceDetailsDialog from "@/components/ResourceDetailsDialog";
 import { Resource, type ResourceFilter as ResourceFilterType, Vendor } from "@/types/vendor";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { PlusCircle, UserPlus } from "lucide-react";
+import { PlusCircle } from "lucide-react";
 import VendorRegistration from "@/components/VendorRegistration";
 import AddResourceForm from "@/components/AddResourceForm";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const { toast } = useToast();
@@ -29,6 +29,7 @@ const Index = () => {
   const [isVendorDialogOpen, setIsVendorDialogOpen] = useState(false);
   const [isAddResourceOpen, setIsAddResourceOpen] = useState(false);
   const [currentVendor, setCurrentVendor] = useState<Vendor | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     let result = [...resources];
@@ -91,7 +92,6 @@ const Index = () => {
   };
 
   const handleVendorRegistration = (vendorData: any) => {
-    // In a real app, we would send this to an API and get a response with an ID
     const newVendor: Vendor = {
       id: `v-${Date.now()}`,
       name: vendorData.name,
@@ -116,7 +116,6 @@ const Index = () => {
       return;
     }
 
-    // In a real app, we would send this to an API and get a response
     const newResource: Resource = {
       id: `r-${Date.now()}`,
       vendorId: currentVendor.id,
@@ -133,7 +132,6 @@ const Index = () => {
     
     setResources(prev => [newResource, ...prev]);
     
-    // Apply current filters to the new resource set
     let updatedFiltered = [...filteredResources];
     const matchesFilters = (
       (!filter.category || filter.category === "All" || filter.category === newResource.category) &&
@@ -177,10 +175,9 @@ const Index = () => {
                 <p className="text-sm mt-1 mb-3">Join our marketplace and offer your resources to construction projects.</p>
                 <Button 
                   className="w-full text-sm bg-vendor hover:bg-vendor-dark flex items-center gap-2"
-                  onClick={() => setIsVendorDialogOpen(true)}
+                  onClick={() => navigate("/vendor")}
                 >
-                  <UserPlus className="h-4 w-4" />
-                  {currentVendor ? "Edit Vendor Profile" : "Become a Vendor"}
+                  {currentVendor ? "Manage Vendor Account" : "Become a Vendor"}
                 </Button>
 
                 {currentVendor && (

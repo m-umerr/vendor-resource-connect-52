@@ -16,7 +16,12 @@ const vendorFormSchema = z.object({
   contactName: z.string().min(2, "Contact name must be at least 2 characters."),
   contactEmail: z.string().email("Please enter a valid email address."),
   contactPhone: z.string().min(10, "Please enter a valid phone number."),
-  location: z.string().min(2, "Location must be at least 2 characters.")
+  location: z.string().min(2, "Location must be at least 2 characters."),
+  password: z.string().min(6, "Password must be at least 6 characters."),
+  confirmPassword: z.string().min(6, "Confirm password must be at least 6 characters.")
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
 });
 
 type VendorFormValues = z.infer<typeof vendorFormSchema>;
@@ -25,9 +30,10 @@ interface VendorRegistrationProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onRegister: (values: VendorFormValues) => void;
+  isPage?: boolean;
 }
 
-const VendorRegistration = ({ open, onOpenChange, onRegister }: VendorRegistrationProps) => {
+const VendorRegistration = ({ open, onOpenChange, onRegister, isPage = false }: VendorRegistrationProps) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -39,7 +45,9 @@ const VendorRegistration = ({ open, onOpenChange, onRegister }: VendorRegistrati
       contactName: "",
       contactEmail: "",
       contactPhone: "",
-      location: ""
+      location: "",
+      password: "",
+      confirmPassword: ""
     }
   });
 
@@ -57,7 +65,9 @@ const VendorRegistration = ({ open, onOpenChange, onRegister }: VendorRegistrati
       });
       
       form.reset();
-      onOpenChange(false);
+      if (!isPage) {
+        onOpenChange(false);
+      }
     } catch (error) {
       toast({
         title: "Registration failed",
@@ -69,6 +79,159 @@ const VendorRegistration = ({ open, onOpenChange, onRegister }: VendorRegistrati
     }
   };
 
+  const renderForm = () => (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Company Name</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter your company name" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Company Description</FormLabel>
+              <FormControl>
+                <Textarea placeholder="Describe your company and services" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="contactName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Contact Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="Primary contact person" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="contactEmail"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Contact Email</FormLabel>
+                <FormControl>
+                  <Input placeholder="email@example.com" type="email" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="contactPhone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Contact Phone</FormLabel>
+                <FormControl>
+                  <Input placeholder="Phone number" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="location"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Location</FormLabel>
+                <FormControl>
+                  <Input placeholder="City, State" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Password</FormLabel>
+                <FormControl>
+                  <Input placeholder="••••••••" type="password" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="confirmPassword"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Confirm Password</FormLabel>
+                <FormControl>
+                  <Input placeholder="••••••••" type="password" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        
+        {isPage ? (
+          <Button type="submit" className="w-full bg-vendor hover:bg-vendor-dark" disabled={isSubmitting}>
+            {isSubmitting ? "Registering..." : "Register"}
+          </Button>
+        ) : (
+          <DialogFooter className="pt-4">
+            <Button variant="outline" type="button" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Registering..." : "Register"}
+            </Button>
+          </DialogFooter>
+        )}
+      </form>
+    </Form>
+  );
+
+  // For page view (not in a dialog)
+  if (isPage) {
+    return (
+      <div className="space-y-4 max-w-md mx-auto">
+        <div className="text-center mb-6">
+          <h2 className="text-xl font-semibold text-vendor-dark">Vendor Registration</h2>
+          <p className="text-sm text-muted-foreground">Create your vendor account to list your resources</p>
+        </div>
+        {renderForm()}
+      </div>
+    );
+  }
+
+  // For dialog view
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
@@ -78,107 +241,7 @@ const VendorRegistration = ({ open, onOpenChange, onRegister }: VendorRegistrati
             Fill out the form below to register your company as a vendor.
           </DialogDescription>
         </DialogHeader>
-        
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Company Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter your company name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Company Description</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Describe your company and services" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="contactName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Contact Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Primary contact person" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="contactEmail"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Contact Email</FormLabel>
-                    <FormControl>
-                      <Input placeholder="email@example.com" type="email" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="contactPhone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Contact Phone</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Phone number" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="location"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Location</FormLabel>
-                    <FormControl>
-                      <Input placeholder="City, State" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <DialogFooter className="pt-4">
-              <Button variant="outline" type="button" onClick={() => onOpenChange(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Registering..." : "Register"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+        {renderForm()}
       </DialogContent>
     </Dialog>
   );
