@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { resources } from "@/data/mockVendorData";
 import Header from "@/components/Header";
 import ResourceCard from "@/components/ResourceCard";
 import ResourceFilter from "@/components/ResourceFilter";
 import ResourceDetailsDialog from "@/components/ResourceDetailsDialog";
-import { Resource, ResourceFilter as ResourceFilterType } from "@/types/vendor";
+import { Resource, type ResourceFilter as ResourceFilterType } from "@/types/vendor";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
@@ -23,11 +22,9 @@ const Index = () => {
   const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
-  // Apply filters when the filter state changes
   useEffect(() => {
     let result = [...resources];
 
-    // Apply search filter
     if (filter.search) {
       const searchTerm = filter.search.toLowerCase();
       result = result.filter(
@@ -37,12 +34,10 @@ const Index = () => {
       );
     }
 
-    // Apply category filter
     if (filter.category && filter.category !== "All") {
       result = result.filter(resource => resource.category === filter.category);
     }
 
-    // Apply price range filter
     if (filter.minPrice !== null) {
       result = result.filter(resource => resource.price >= (filter.minPrice as number));
     }
@@ -50,7 +45,6 @@ const Index = () => {
       result = result.filter(resource => resource.price <= (filter.maxPrice as number));
     }
 
-    // Apply vendor filter
     if (filter.vendorId) {
       result = result.filter(resource => resource.vendorId === filter.vendorId);
     }
@@ -94,7 +88,6 @@ const Index = () => {
       
       <main className="container mx-auto px-4 py-8 flex-grow">
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Sidebar with filters */}
           <div className="w-full lg:w-64">
             <div className="sticky top-20">
               <h2 className="text-lg font-semibold mb-3">Filters</h2>
@@ -102,6 +95,7 @@ const Index = () => {
                 onFilterChange={handleFilterChange}
                 currentFilter={filter}
               />
+              
               {(filter.search || filter.category !== "All" || filter.minPrice !== null) && (
                 <Button 
                   variant="ghost" 
@@ -130,7 +124,6 @@ const Index = () => {
             </div>
           </div>
           
-          {/* Main content area */}
           <div className="flex-grow">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold">Available Resources</h2>

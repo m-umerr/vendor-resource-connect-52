@@ -1,13 +1,13 @@
 
 import { useState } from "react";
-import { ResourceCategory, ResourceFilter } from "@/types/vendor";
+import { ResourceCategory, type ResourceFilter as ResourceFilterType } from "@/types/vendor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 
 interface ResourceFilterProps {
-  onFilterChange: (filter: ResourceFilter) => void;
-  currentFilter: ResourceFilter;
+  onFilterChange: (filter: ResourceFilterType) => void;
+  currentFilter: ResourceFilterType;
 }
 
 const ResourceFilter = ({ onFilterChange, currentFilter }: ResourceFilterProps) => {
