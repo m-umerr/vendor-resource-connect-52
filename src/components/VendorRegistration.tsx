@@ -8,7 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 const vendorFormSchema = z.object({
   name: z.string().min(2, "Company name must be at least 2 characters."),
@@ -29,12 +29,12 @@ type VendorFormValues = z.infer<typeof vendorFormSchema>;
 interface VendorRegistrationProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onRegister: (values: VendorFormValues) => void;
+  onRegister?: (values: VendorFormValues) => void;
   isPage?: boolean;
 }
 
 const VendorRegistration = ({ open, onOpenChange, onRegister, isPage = false }: VendorRegistrationProps) => {
-  const { toast } = useToast();
+  const { signUp, isLoading } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<VendorFormValues>({
@@ -55,25 +55,21 @@ const VendorRegistration = ({ open, onOpenChange, onRegister, isPage = false }: 
     setIsSubmitting(true);
     
     try {
-      // In a real app, this would send data to an API
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      onRegister(values);
-      
-      toast({
-        title: "Registration successful!",
-        description: "Your vendor account has been created."
+      await signUp(values.contactEmail, values.password, {
+        name: values.name,
+        contactName: values.contactName,
+        contactPhone: values.contactPhone,
+        location: values.location,
       });
+      
+      if (onRegister) {
+        onRegister(values);
+      }
       
       form.reset();
       if (!isPage) {
         onOpenChange(false);
       }
-    } catch (error) {
-      toast({
-        title: "Registration failed",
-        description: "There was a problem with your registration. Please try again.",
-        variant: "destructive"
-      });
     } finally {
       setIsSubmitting(false);
     }
@@ -201,16 +197,16 @@ const VendorRegistration = ({ open, onOpenChange, onRegister, isPage = false }: 
         </div>
         
         {isPage ? (
-          <Button type="submit" className="w-full bg-vendor hover:bg-vendor-dark" disabled={isSubmitting}>
-            {isSubmitting ? "Registering..." : "Register"}
+          <Button type="submit" className="w-full bg-vendor hover:bg-vendor-dark" disabled={isSubmitting || isLoading}>
+            {isSubmitting || isLoading ? "Registering..." : "Register"}
           </Button>
         ) : (
           <DialogFooter className="pt-4">
             <Button variant="outline" type="button" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Registering..." : "Register"}
+            <Button type="submit" disabled={isSubmitting || isLoading}>
+              {isSubmitting || isLoading ? "Registering..." : "Register"}
             </Button>
           </DialogFooter>
         )}

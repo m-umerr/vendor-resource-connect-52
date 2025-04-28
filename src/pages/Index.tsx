@@ -1,19 +1,22 @@
+
 import { useState, useEffect } from "react";
-import { resources as initialResources } from "@/data/mockVendorData";
 import Header from "@/components/Header";
 import ResourceCard from "@/components/ResourceCard";
 import ResourceFilter from "@/components/ResourceFilter";
 import ResourceDetailsDialog from "@/components/ResourceDetailsDialog";
-import { Resource, type ResourceFilter as ResourceFilterType, Vendor } from "@/types/vendor";
+import { Resource, type ResourceFilter as ResourceFilterType } from "@/types/vendor";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { PlusCircle } from "lucide-react";
 import VendorRegistration from "@/components/VendorRegistration";
 import AddResourceForm from "@/components/AddResourceForm";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
   const { toast } = useToast();
+  const { user, vendor } = useAuth();
   const [filter, setFilter] = useState<ResourceFilterType>({
     search: "",
     category: "All",
@@ -22,14 +25,65 @@ const Index = () => {
     vendorId: null,
   });
   
-  const [resources, setResources] = useState<Resource[]>(initialResources);
-  const [filteredResources, setFilteredResources] = useState<Resource[]>(initialResources);
+  const [resources, setResources] = useState<Resource[]>([]);
+  const [filteredResources, setFilteredResources] = useState<Resource[]>([]);
   const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isVendorDialogOpen, setIsVendorDialogOpen] = useState(false);
   const [isAddResourceOpen, setIsAddResourceOpen] = useState(false);
-  const [currentVendor, setCurrentVendor] = useState<Vendor | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchResources();
+  }, []);
+
+  const fetchResources = async () => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from("resources")
+        .select(`
+          *,
+          vendors:vendor_id (
+            id, name, contact_name, contact_email, contact_phone, location, rating
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      // Convert from Supabase format to our app's format
+      const formattedResources = data.map(item => ({
+        id: item.id,
+        vendorId: item.vendor_id,
+        title: item.title,
+        description: item.description,
+        category: item.category as any,
+        price: item.price,
+        unit: item.unit as any,
+        availability: item.availability,
+        imageUrl: item.image_url || 'https://placehold.co/600x400?text=Resource',
+        featured: item.featured,
+        createdAt: item.created_at,
+        vendor: item.vendors
+      }));
+
+      setResources(formattedResources);
+      setFilteredResources(formattedResources);
+    } catch (error: any) {
+      console.error("Error fetching resources:", error);
+      toast({
+        title: "Error loading resources",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     let result = [...resources];
@@ -91,23 +145,8 @@ const Index = () => {
     });
   };
 
-  const handleVendorRegistration = (vendorData: any) => {
-    const newVendor: Vendor = {
-      id: `v-${Date.now()}`,
-      name: vendorData.name,
-      description: vendorData.description,
-      contactName: vendorData.contactName,
-      contactEmail: vendorData.contactEmail,
-      contactPhone: vendorData.contactPhone,
-      location: vendorData.location,
-      rating: 5,
-    };
-    
-    setCurrentVendor(newVendor);
-  };
-
-  const handleAddResource = (resourceData: any) => {
-    if (!currentVendor) {
+  const handleAddResource = async (resourceData: any) => {
+    if (!vendor) {
       toast({
         title: "Error",
         description: "You need to register as a vendor first.",
@@ -116,33 +155,36 @@ const Index = () => {
       return;
     }
 
-    const newResource: Resource = {
-      id: `r-${Date.now()}`,
-      vendorId: currentVendor.id,
-      title: resourceData.title,
-      description: resourceData.description,
-      category: resourceData.category,
-      price: resourceData.price,
-      unit: resourceData.unit,
-      availability: resourceData.availability,
-      imageUrl: resourceData.imageUrl || 'https://placehold.co/600x400?text=Resource',
-      featured: false,
-      createdAt: new Date().toISOString(),
-    };
-    
-    setResources(prev => [newResource, ...prev]);
-    
-    let updatedFiltered = [...filteredResources];
-    const matchesFilters = (
-      (!filter.category || filter.category === "All" || filter.category === newResource.category) &&
-      (!filter.minPrice || newResource.price >= filter.minPrice) &&
-      (!filter.maxPrice || newResource.price <= filter.maxPrice) &&
-      (!filter.vendorId || filter.vendorId === newResource.vendorId)
-    );
-    
-    if (matchesFilters) {
-      updatedFiltered = [newResource, ...updatedFiltered];
-      setFilteredResources(updatedFiltered);
+    try {
+      const { data, error } = await supabase.from("resources").insert({
+        vendor_id: vendor.id,
+        title: resourceData.title,
+        description: resourceData.description,
+        category: resourceData.category,
+        price: resourceData.price,
+        unit: resourceData.unit,
+        availability: resourceData.availability,
+        image_url: resourceData.imageUrl || 'https://placehold.co/600x400?text=Resource',
+        featured: false
+      }).select();
+
+      if (error) {
+        throw error;
+      }
+      
+      toast({
+        title: "Resource added",
+        description: "Your resource has been added successfully.",
+      });
+
+      // Refresh resources
+      fetchResources();
+    } catch (error: any) {
+      toast({
+        title: "Error adding resource",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   };
 
@@ -173,14 +215,24 @@ const Index = () => {
               <div className="mt-6 p-4 bg-vendor-light rounded-lg border border-vendor-border">
                 <h3 className="font-medium text-vendor-dark">Are you a vendor?</h3>
                 <p className="text-sm mt-1 mb-3">Join our marketplace and offer your resources to construction projects.</p>
-                <Button 
-                  className="w-full text-sm bg-vendor hover:bg-vendor-dark flex items-center gap-2"
-                  onClick={() => navigate("/vendor")}
-                >
-                  {currentVendor ? "Manage Vendor Account" : "Become a Vendor"}
-                </Button>
+                
+                {user ? (
+                  <Button 
+                    className="w-full text-sm bg-vendor hover:bg-vendor-dark"
+                    onClick={() => navigate("/vendor/dashboard")}
+                  >
+                    {vendor ? "Manage Vendor Account" : "Complete Vendor Registration"}
+                  </Button>
+                ) : (
+                  <Button 
+                    className="w-full text-sm bg-vendor hover:bg-vendor-dark"
+                    onClick={() => navigate("/vendor")}
+                  >
+                    Become a Vendor
+                  </Button>
+                )}
 
-                {currentVendor && (
+                {vendor && (
                   <Button 
                     className="w-full text-sm mt-2 flex items-center gap-2"
                     onClick={() => setIsAddResourceOpen(true)}
@@ -191,13 +243,13 @@ const Index = () => {
                 )}
               </div>
 
-              {currentVendor && (
+              {vendor && (
                 <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200">
                   <h3 className="font-medium text-vendor-dark">Your Vendor Profile</h3>
-                  <p className="text-sm font-semibold mt-2">{currentVendor.name}</p>
-                  <p className="text-xs text-muted-foreground">{currentVendor.location}</p>
+                  <p className="text-sm font-semibold mt-2">{vendor.name}</p>
+                  <p className="text-xs text-muted-foreground">{vendor.location}</p>
                   <p className="text-xs mt-2">
-                    Contact: {currentVendor.contactName} ({currentVendor.contactEmail})
+                    Contact: {vendor.contact_name} ({vendor.contact_email})
                   </p>
                   <Button 
                     variant="outline" 
@@ -205,7 +257,7 @@ const Index = () => {
                     onClick={() => {
                       setFilter(prev => ({
                         ...prev,
-                        vendorId: currentVendor.id
+                        vendorId: vendor.id
                       }));
                     }}
                   >
@@ -224,7 +276,11 @@ const Index = () => {
               </span>
             </div>
             
-            {filteredResources.length === 0 ? (
+            {isLoading ? (
+              <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-200 text-center">
+                <p>Loading resources...</p>
+              </div>
+            ) : filteredResources.length === 0 ? (
               <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-200 text-center">
                 <h3 className="text-lg font-semibold mb-2">No resources found</h3>
                 <p className="text-muted-foreground mb-4">
@@ -267,14 +323,13 @@ const Index = () => {
       <VendorRegistration
         open={isVendorDialogOpen}
         onOpenChange={setIsVendorDialogOpen}
-        onRegister={handleVendorRegistration}
       />
 
       <AddResourceForm
         open={isAddResourceOpen}
         onOpenChange={setIsAddResourceOpen}
         onAddResource={handleAddResource}
-        vendorId={currentVendor?.id || null}
+        vendorId={vendor?.id || null}
       />
     </div>
   );

@@ -9,7 +9,101 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      resources: {
+        Row: {
+          availability: string
+          category: string
+          created_at: string
+          description: string
+          featured: boolean | null
+          id: string
+          image_url: string | null
+          price: number
+          title: string
+          unit: string
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          availability: string
+          category: string
+          created_at?: string
+          description: string
+          featured?: boolean | null
+          id?: string
+          image_url?: string | null
+          price: number
+          title: string
+          unit: string
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          availability?: string
+          category?: string
+          created_at?: string
+          description?: string
+          featured?: boolean | null
+          id?: string
+          image_url?: string | null
+          price?: number
+          title?: string
+          unit?: string
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resources_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendors: {
+        Row: {
+          contact_email: string
+          contact_name: string
+          contact_phone: string
+          created_at: string
+          description: string | null
+          id: string
+          location: string
+          name: string
+          rating: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          contact_email: string
+          contact_name: string
+          contact_phone: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          location: string
+          name: string
+          rating?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          contact_email?: string
+          contact_name?: string
+          contact_phone?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          location?: string
+          name?: string
+          rating?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

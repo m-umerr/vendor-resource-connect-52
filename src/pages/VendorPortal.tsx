@@ -1,15 +1,24 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Header from "@/components/Header";
 import VendorRegistration from "@/components/VendorRegistration";
 import VendorLogin from "@/components/VendorLogin";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const VendorPortal = () => {
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const navigate = useNavigate();
+  const { user, vendor } = useAuth();
+  
+  useEffect(() => {
+    // Redirect to dashboard if already logged in
+    if (user && vendor) {
+      navigate("/vendor/dashboard");
+    }
+  }, [user, vendor, navigate]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -75,11 +84,6 @@ const VendorPortal = () => {
                 <VendorRegistration 
                   open={isRegisterOpen} 
                   onOpenChange={setIsRegisterOpen} 
-                  onRegister={(data) => {
-                    console.log("Vendor registered:", data);
-                    // In a real app, we would store this info and redirect
-                    navigate("/");
-                  }}
                   isPage={true}
                 />
               </TabsContent>

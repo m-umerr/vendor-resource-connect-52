@@ -6,8 +6,7 @@ import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const vendorLoginSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
@@ -17,9 +16,8 @@ const vendorLoginSchema = z.object({
 type VendorLoginValues = z.infer<typeof vendorLoginSchema>;
 
 const VendorLogin = () => {
-  const { toast } = useToast();
+  const { signIn, isLoading } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const navigate = useNavigate();
 
   const form = useForm<VendorLoginValues>({
     resolver: zodResolver(vendorLoginSchema),
@@ -33,23 +31,7 @@ const VendorLogin = () => {
     setIsSubmitting(true);
     
     try {
-      // In a real app, this would validate against an API
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      
-      // For demo purposes, we'll just show a toast and redirect
-      toast({
-        title: "Login successful!",
-        description: "Welcome back to the vendor portal."
-      });
-      
-      // Redirect to home with vendor state (in a real app, this would use proper auth)
-      navigate("/");
-    } catch (error) {
-      toast({
-        title: "Login failed",
-        description: "Invalid email or password. Please try again.",
-        variant: "destructive"
-      });
+      await signIn(values.email, values.password);
     } finally {
       setIsSubmitting(false);
     }
@@ -92,8 +74,8 @@ const VendorLogin = () => {
             )}
           />
           
-          <Button type="submit" className="w-full bg-vendor hover:bg-vendor-dark" disabled={isSubmitting}>
-            {isSubmitting ? "Logging in..." : "Login"}
+          <Button type="submit" className="w-full bg-vendor hover:bg-vendor-dark" disabled={isSubmitting || isLoading}>
+            {isSubmitting || isLoading ? "Logging in..." : "Login"}
           </Button>
           
           <div className="text-center text-sm">
