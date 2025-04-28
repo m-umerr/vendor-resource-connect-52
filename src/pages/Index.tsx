@@ -1,12 +1,16 @@
+
 import { useState, useEffect } from "react";
-import { resources } from "@/data/mockVendorData";
+import { resources as initialResources } from "@/data/mockVendorData";
 import Header from "@/components/Header";
 import ResourceCard from "@/components/ResourceCard";
 import ResourceFilter from "@/components/ResourceFilter";
 import ResourceDetailsDialog from "@/components/ResourceDetailsDialog";
-import { Resource, type ResourceFilter as ResourceFilterType } from "@/types/vendor";
+import { Resource, type ResourceFilter as ResourceFilterType, Vendor } from "@/types/vendor";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { PlusCircle, UserPlus } from "lucide-react";
+import VendorRegistration from "@/components/VendorRegistration";
+import AddResourceForm from "@/components/AddResourceForm";
 
 const Index = () => {
   const { toast } = useToast();
@@ -18,9 +22,13 @@ const Index = () => {
     vendorId: null,
   });
   
-  const [filteredResources, setFilteredResources] = useState<Resource[]>(resources);
+  const [resources, setResources] = useState<Resource[]>(initialResources);
+  const [filteredResources, setFilteredResources] = useState<Resource[]>(initialResources);
   const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isVendorDialogOpen, setIsVendorDialogOpen] = useState(false);
+  const [isAddResourceOpen, setIsAddResourceOpen] = useState(false);
+  const [currentVendor, setCurrentVendor] = useState<Vendor | null>(null);
 
   useEffect(() => {
     let result = [...resources];
@@ -50,7 +58,7 @@ const Index = () => {
     }
 
     setFilteredResources(result);
-  }, [filter]);
+  }, [filter, resources]);
 
   const handleSearchChange = (value: string) => {
     setFilter(prev => ({ ...prev, search: value }));
@@ -82,6 +90,64 @@ const Index = () => {
     });
   };
 
+  const handleVendorRegistration = (vendorData: any) => {
+    // In a real app, we would send this to an API and get a response with an ID
+    const newVendor: Vendor = {
+      id: `v-${Date.now()}`,
+      name: vendorData.name,
+      description: vendorData.description,
+      contactName: vendorData.contactName,
+      contactEmail: vendorData.contactEmail,
+      contactPhone: vendorData.contactPhone,
+      location: vendorData.location,
+      rating: 5,
+    };
+    
+    setCurrentVendor(newVendor);
+  };
+
+  const handleAddResource = (resourceData: any) => {
+    if (!currentVendor) {
+      toast({
+        title: "Error",
+        description: "You need to register as a vendor first.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // In a real app, we would send this to an API and get a response
+    const newResource: Resource = {
+      id: `r-${Date.now()}`,
+      vendorId: currentVendor.id,
+      title: resourceData.title,
+      description: resourceData.description,
+      category: resourceData.category,
+      price: resourceData.price,
+      unit: resourceData.unit,
+      availability: resourceData.availability,
+      imageUrl: resourceData.imageUrl || 'https://placehold.co/600x400?text=Resource',
+      featured: false,
+      createdAt: new Date().toISOString(),
+    };
+    
+    setResources(prev => [newResource, ...prev]);
+    
+    // Apply current filters to the new resource set
+    let updatedFiltered = [...filteredResources];
+    const matchesFilters = (
+      (!filter.category || filter.category === "All" || filter.category === newResource.category) &&
+      (!filter.minPrice || newResource.price >= filter.minPrice) &&
+      (!filter.maxPrice || newResource.price <= filter.maxPrice) &&
+      (!filter.vendorId || filter.vendorId === newResource.vendorId)
+    );
+    
+    if (matchesFilters) {
+      updatedFiltered = [newResource, ...updatedFiltered];
+      setFilteredResources(updatedFiltered);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header onSearchChange={handleSearchChange} />
@@ -110,17 +176,46 @@ const Index = () => {
                 <h3 className="font-medium text-vendor-dark">Are you a vendor?</h3>
                 <p className="text-sm mt-1 mb-3">Join our marketplace and offer your resources to construction projects.</p>
                 <Button 
-                  className="w-full text-sm bg-vendor hover:bg-vendor-dark"
-                  onClick={() => {
-                    toast({
-                      title: "Vendor registration",
-                      description: "Vendor registration is coming soon!"
-                    });
-                  }}
+                  className="w-full text-sm bg-vendor hover:bg-vendor-dark flex items-center gap-2"
+                  onClick={() => setIsVendorDialogOpen(true)}
                 >
-                  Become a Vendor
+                  <UserPlus className="h-4 w-4" />
+                  {currentVendor ? "Edit Vendor Profile" : "Become a Vendor"}
                 </Button>
+
+                {currentVendor && (
+                  <Button 
+                    className="w-full text-sm mt-2 flex items-center gap-2"
+                    onClick={() => setIsAddResourceOpen(true)}
+                  >
+                    <PlusCircle className="h-4 w-4" />
+                    Add New Resource
+                  </Button>
+                )}
               </div>
+
+              {currentVendor && (
+                <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200">
+                  <h3 className="font-medium text-vendor-dark">Your Vendor Profile</h3>
+                  <p className="text-sm font-semibold mt-2">{currentVendor.name}</p>
+                  <p className="text-xs text-muted-foreground">{currentVendor.location}</p>
+                  <p className="text-xs mt-2">
+                    Contact: {currentVendor.contactName} ({currentVendor.contactEmail})
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    className="w-full text-xs mt-3"
+                    onClick={() => {
+                      setFilter(prev => ({
+                        ...prev,
+                        vendorId: currentVendor.id
+                      }));
+                    }}
+                  >
+                    View Your Resources
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
           
@@ -170,6 +265,19 @@ const Index = () => {
         resource={selectedResource}
         open={isDetailsOpen}
         onOpenChange={setIsDetailsOpen}
+      />
+
+      <VendorRegistration
+        open={isVendorDialogOpen}
+        onOpenChange={setIsVendorDialogOpen}
+        onRegister={handleVendorRegistration}
+      />
+
+      <AddResourceForm
+        open={isAddResourceOpen}
+        onOpenChange={setIsAddResourceOpen}
+        onAddResource={handleAddResource}
+        vendorId={currentVendor?.id || null}
       />
     </div>
   );
