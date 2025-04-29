@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Resource, Vendor } from "@/types/vendor";
 import { getVendorById } from "@/data/mockVendorData";
 import { useState } from "react";
-import { Check, Box, Construction, HandTruck, HardHat, Tool, Package } from "lucide-react";
+import { Check, Box, Construction, Truck, HardHat, Wrench, Package } from "lucide-react";
 
 interface ResourceDetailsDialogProps {
   resource: Resource | null;
@@ -43,8 +43,8 @@ const ResourceDetailsDialog = ({ resource, open, onOpenChange }: ResourceDetails
       case 'Brick': return <Box className="h-4 w-4" />;
       case 'Cement': return <Package className="h-4 w-4" />;
       case 'Crane': return <Construction className="h-4 w-4" />;
-      case 'Drill': return <Tool className="h-4 w-4" />;
-      case 'Forklift': return <HandTruck className="h-4 w-4" />;
+      case 'Drill': return <Wrench className="h-4 w-4" />;
+      case 'Forklift': return <Truck className="h-4 w-4" />;
       case 'Helmet': return <HardHat className="h-4 w-4" />;
       case 'Ladder': return <Construction className="h-4 w-4" />;
       case 'Lumber': return <Package className="h-4 w-4" />;
