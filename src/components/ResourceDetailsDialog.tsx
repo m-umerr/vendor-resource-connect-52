@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Resource, Vendor } from "@/types/vendor";
 import { getVendorById } from "@/data/mockVendorData";
 import { useState } from "react";
-import { Check } from "lucide-react";
+import { Check, Brick, Cement, Crane, Drill, Forklift, Helmet, Ladder, Lumber, Steel } from "lucide-react";
 
 interface ResourceDetailsDialogProps {
   resource: Resource | null;
@@ -36,6 +36,26 @@ const ResourceDetailsDialog = ({ resource, open, onOpenChange }: ResourceDetails
       });
     }, 1000);
   };
+
+  // Helper function to get the appropriate icon for each resource type
+  const getSpecificationIcon = (specType: string) => {
+    switch (specType) {
+      case 'Brick': return <Brick className="h-4 w-4" />;
+      case 'Cement': return <Cement className="h-4 w-4" />;
+      case 'Crane': return <Crane className="h-4 w-4" />;
+      case 'Drill': return <Drill className="h-4 w-4" />;
+      case 'Forklift': return <Forklift className="h-4 w-4" />;
+      case 'Helmet': return <Helmet className="h-4 w-4" />;
+      case 'Ladder': return <Ladder className="h-4 w-4" />;
+      case 'Lumber': return <Lumber className="h-4 w-4" />;
+      case 'Steel': return <Steel className="h-4 w-4" />;
+      default: return <Check className="h-4 w-4" />;
+    }
+  };
+
+  // Check if resource has specifications
+  const hasSpecifications = resource.specifications && 
+    Object.keys(resource.specifications).length > 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -81,15 +101,17 @@ const ResourceDetailsDialog = ({ resource, open, onOpenChange }: ResourceDetails
             </div>
           </div>
 
-          {resource.specifications && (
+          {hasSpecifications && (
             <>
               <Separator />
               <div>
-                <h3 className="font-medium mb-2">Specifications</h3>
-                <div className="grid grid-cols-2 gap-2">
-                  {Object.entries(resource.specifications).map(([key, value]) => (
-                    <div key={key} className="text-sm">
-                      <span className="font-medium">{key}:</span> {value}
+                <h3 className="font-medium mb-2">Resource Specifications</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {Object.entries(resource.specifications as Record<string, number>).map(([spec, quantity]) => (
+                    <div key={spec} className="flex items-center gap-2 bg-gray-50 p-2 rounded border border-gray-200">
+                      {getSpecificationIcon(spec)}
+                      <span className="font-medium">{spec}:</span> 
+                      <span className="text-vendor-dark">{quantity} units</span>
                     </div>
                   ))}
                 </div>
