@@ -66,6 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user) return;
     
     try {
+      console.log("Loading vendor profile for user ID:", user.id);
       const { data, error } = await supabase
         .from('vendors')
         .select('*')
@@ -82,6 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       
+      console.log("Vendor profile loaded:", data);
       setVendor(data);
     } catch (error: any) {
       console.error("Error in loadVendorProfile:", error);

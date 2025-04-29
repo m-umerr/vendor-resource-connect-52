@@ -24,27 +24,55 @@ interface Resource {
 }
 
 const VendorDashboard = () => {
-  const { user, vendor, signOut } = useAuth();
+  const { user, vendor, signOut, loadVendorProfile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [resources, setResources] = useState<Resource[]>([]);
   const [isAddResourceOpen, setIsAddResourceOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isVendorLoading, setIsVendorLoading] = useState(true);
 
   useEffect(() => {
+    // Check if user is logged in
     if (!user) {
       navigate("/vendor");
       return;
     }
     
-    fetchVendorResources();
+    // Load vendor profile if not available
+    const checkVendorProfile = async () => {
+      setIsVendorLoading(true);
+      
+      if (!vendor) {
+        try {
+          console.log("Loading vendor profile...");
+          await loadVendorProfile();
+        } catch (error) {
+          console.error("Error loading vendor profile:", error);
+          toast({
+            title: "Error loading profile",
+            description: "Please try logging in again.",
+            variant: "destructive",
+          });
+          await signOut();
+          return;
+        }
+      }
+      
+      setIsVendorLoading(false);
+      fetchVendorResources();
+    };
+    
+    checkVendorProfile();
   }, [user, navigate, vendor]);
 
   const fetchVendorResources = async () => {
-    if (!vendor) return;
+    if (!user || !vendor) return;
     
     try {
       setIsLoading(true);
+      console.log("Fetching resources for vendor ID:", vendor.id);
+      
       const { data, error } = await supabase
         .from("resources")
         .select("*")
@@ -55,6 +83,7 @@ const VendorDashboard = () => {
         throw error;
       }
 
+      console.log("Resources fetched:", data);
       setResources(data || []);
     } catch (error: any) {
       console.error("Error fetching resources:", error);
@@ -70,6 +99,11 @@ const VendorDashboard = () => {
 
   const handleAddResource = async (resourceData: any) => {
     if (!vendor) {
+      toast({
+        title: "Error",
+        description: "Vendor profile not found. Please try logging in again.",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -132,8 +166,36 @@ const VendorDashboard = () => {
     }
   };
 
+  // Show loading state while checking authentication
+  if (isVendorLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <Header onSearchChange={() => {}} />
+        <main className="container mx-auto px-4 py-8 flex-grow">
+          <div className="text-center py-20">
+            <p className="text-lg">Loading your vendor dashboard...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Show error if no user or vendor
   if (!user || !vendor) {
-    return null; // Will redirect in useEffect
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <Header onSearchChange={() => {}} />
+        <main className="container mx-auto px-4 py-8 flex-grow">
+          <div className="text-center py-20">
+            <h2 className="text-xl font-bold mb-4">Authentication Required</h2>
+            <p className="mb-6">Please log in to access your vendor dashboard.</p>
+            <Button onClick={() => navigate("/vendor?tab=login")}>
+              Go to Login Page
+            </Button>
+          </div>
+        </main>
+      </div>
+    );
   }
 
   return (
