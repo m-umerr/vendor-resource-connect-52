@@ -63,11 +63,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const loadVendorProfile = async () => {
+    if (!user) return;
+    
     try {
       const { data, error } = await supabase
         .from('vendors')
         .select('*')
-        .eq('user_id', user?.id)
+        .eq('user_id', user.id)
         .maybeSingle();
       
       if (error) {
@@ -109,11 +111,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (data.user) {
+        // Wait a moment to ensure the trigger has time to run
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Manually load the vendor profile
+        await loadVendorProfile();
+        
         toast({
           title: "Account created!",
           description: "You have been signed up and logged in.",
         });
-        navigate("/");
+        navigate("/vendor/dashboard");
       }
     } catch (error: any) {
       toast({
@@ -144,7 +152,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           title: "Logged in!",
           description: "You have been successfully logged in.",
         });
-        navigate("/");
+        navigate("/vendor/dashboard");
       }
     } catch (error: any) {
       toast({

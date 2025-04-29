@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -9,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 const vendorFormSchema = z.object({
   name: z.string().min(2, "Company name must be at least 2 characters."),
@@ -35,6 +35,7 @@ interface VendorRegistrationProps {
 
 const VendorRegistration = ({ open, onOpenChange, onRegister, isPage = false }: VendorRegistrationProps) => {
   const { signUp, isLoading } = useAuth();
+  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<VendorFormValues>({
@@ -55,6 +56,8 @@ const VendorRegistration = ({ open, onOpenChange, onRegister, isPage = false }: 
     setIsSubmitting(true);
     
     try {
+      console.log("Registration values:", values);
+      
       await signUp(values.contactEmail, values.password, {
         name: values.name,
         contactName: values.contactName,
@@ -70,6 +73,13 @@ const VendorRegistration = ({ open, onOpenChange, onRegister, isPage = false }: 
       if (!isPage) {
         onOpenChange(false);
       }
+    } catch (error: any) {
+      console.error("Registration error:", error);
+      toast({
+        title: "Registration failed",
+        description: error.message || "An error occurred during registration.",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
