@@ -114,14 +114,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Wait a moment to ensure the trigger has time to run
         await new Promise(resolve => setTimeout(resolve, 1000));
         
-        // Manually load the vendor profile
-        await loadVendorProfile();
+        // Sign out the user after registration to force them to log in
+        await supabase.auth.signOut();
         
         toast({
           title: "Account created!",
-          description: "You have been signed up and logged in.",
+          description: "Your account has been created. Please login.",
         });
-        navigate("/vendor/dashboard");
+        
+        // Redirect to the vendor portal page with login tab active
+        navigate("/vendor?tab=login");
       }
     } catch (error: any) {
       toast({

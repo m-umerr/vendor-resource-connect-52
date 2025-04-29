@@ -4,21 +4,31 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Header from "@/components/Header";
 import VendorRegistration from "@/components/VendorRegistration";
 import VendorLogin from "@/components/VendorLogin";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
 const VendorPortal = () => {
-  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
-  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("info");
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, vendor } = useAuth();
   
   useEffect(() => {
     // Redirect to dashboard if already logged in
     if (user && vendor) {
       navigate("/vendor/dashboard");
+      return;
     }
-  }, [user, vendor, navigate]);
+    
+    // Check URL for tab parameter
+    const urlParams = new URLSearchParams(location.search);
+    const tabParam = urlParams.get('tab');
+    
+    // Set active tab if specified in URL
+    if (tabParam && ['info', 'login', 'register'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [user, vendor, navigate, location]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -34,7 +44,7 @@ const VendorPortal = () => {
           </div>
           
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-            <Tabs defaultValue="info" className="w-full">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-3 mb-6">
                 <TabsTrigger value="info">About</TabsTrigger>
                 <TabsTrigger value="login">Login</TabsTrigger>
@@ -82,8 +92,8 @@ const VendorPortal = () => {
               
               <TabsContent value="register">
                 <VendorRegistration 
-                  open={isRegisterOpen} 
-                  onOpenChange={setIsRegisterOpen} 
+                  open={true} 
+                  onOpenChange={() => {}} 
                   isPage={true}
                 />
               </TabsContent>
