@@ -19,6 +19,7 @@ export type Database = {
           id: string
           image_url: string | null
           price: number
+          specifications: Json | null
           title: string
           unit: string
           updated_at: string
@@ -33,6 +34,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           price: number
+          specifications?: Json | null
           title: string
           unit: string
           updated_at?: string
@@ -47,6 +49,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           price?: number
+          specifications?: Json | null
           title?: string
           unit?: string
           updated_at?: string

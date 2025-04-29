@@ -117,7 +117,8 @@ const VendorDashboard = () => {
         unit: resourceData.unit,
         availability: resourceData.availability,
         image_url: resourceData.imageUrl || 'https://placehold.co/600x400?text=Resource',
-        featured: false
+        featured: false,
+        specifications: resourceData.specifications || {}
       }).select();
 
       if (error) {

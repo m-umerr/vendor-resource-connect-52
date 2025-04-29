@@ -11,6 +11,25 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ResourceCategory, ResourceUnit } from "@/types/vendor";
 import { useToast } from "@/hooks/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
+
+// Define resource specification types
+interface ResourceSpecItem {
+  name: string;
+  quantity: number;
+}
+
+const resourceSpecifications = [
+  "Brick",
+  "Cement",
+  "Crane",
+  "Drill",
+  "Forklift",
+  "Helmet",
+  "Ladder",
+  "Lumber",
+  "Steel"
+];
 
 const resourceFormSchema = z.object({
   title: z.string().min(2, "Title must be at least 2 characters."),
@@ -27,13 +46,16 @@ type ResourceFormValues = z.infer<typeof resourceFormSchema>;
 interface AddResourceFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAddResource: (resource: ResourceFormValues) => void;
+  onAddResource: (resource: ResourceFormValues & { specifications?: Record<string, number> }) => void;
   vendorId: string | null;
 }
 
 const AddResourceForm = ({ open, onOpenChange, onAddResource, vendorId }: AddResourceFormProps) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedSpecs, setSelectedSpecs] = useState<Record<string, boolean>>({});
+  const [specQuantities, setSpecQuantities] = useState<Record<string, number>>({});
+  const [specErrors, setSpecErrors] = useState<Record<string, string>>({});
 
   const form = useForm<ResourceFormValues>({
     resolver: zodResolver(resourceFormSchema),
@@ -48,6 +70,53 @@ const AddResourceForm = ({ open, onOpenChange, onAddResource, vendorId }: AddRes
     }
   });
 
+  const handleSpecChange = (spec: string, checked: boolean) => {
+    setSelectedSpecs({
+      ...selectedSpecs,
+      [spec]: checked
+    });
+
+    // Clear error if unchecked
+    if (!checked && specErrors[spec]) {
+      const newErrors = { ...specErrors };
+      delete newErrors[spec];
+      setSpecErrors(newErrors);
+    }
+  };
+
+  const handleQuantityChange = (spec: string, value: string) => {
+    const quantity = parseInt(value);
+    setSpecQuantities({
+      ...specQuantities,
+      [spec]: isNaN(quantity) ? 0 : quantity
+    });
+
+    // Clear error if valid
+    if (quantity > 0 && specErrors[spec]) {
+      const newErrors = { ...specErrors };
+      delete newErrors[spec];
+      setSpecErrors(newErrors);
+    }
+  };
+
+  const validateSpecifications = (): boolean => {
+    const newErrors: Record<string, string> = {};
+    let isValid = true;
+
+    Object.entries(selectedSpecs).forEach(([spec, isSelected]) => {
+      if (isSelected) {
+        const quantity = specQuantities[spec] || 0;
+        if (quantity <= 0) {
+          newErrors[spec] = "Quantity required";
+          isValid = false;
+        }
+      }
+    });
+
+    setSpecErrors(newErrors);
+    return isValid;
+  };
+
   const handleSubmit = async (values: ResourceFormValues) => {
     if (!vendorId) {
       toast({
@@ -58,13 +127,33 @@ const AddResourceForm = ({ open, onOpenChange, onAddResource, vendorId }: AddRes
       return;
     }
 
+    if (!validateSpecifications()) {
+      toast({
+        title: "Validation Error",
+        description: "Please provide quantities for all selected specifications.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     
     try {
+      // Create specifications object with only selected items
+      const specifications: Record<string, number> = {};
+      Object.entries(selectedSpecs).forEach(([spec, isSelected]) => {
+        if (isSelected && specQuantities[spec] > 0) {
+          specifications[spec] = specQuantities[spec];
+        }
+      });
+
       // In a real app, this would send data to an API
       await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
       
-      onAddResource(values);
+      onAddResource({
+        ...values,
+        specifications
+      });
       
       toast({
         title: "Resource added successfully!",
@@ -72,6 +161,9 @@ const AddResourceForm = ({ open, onOpenChange, onAddResource, vendorId }: AddRes
       });
       
       form.reset();
+      setSelectedSpecs({});
+      setSpecQuantities({});
+      setSpecErrors({});
       onOpenChange(false);
     } catch (error) {
       toast({
@@ -89,7 +181,7 @@ const AddResourceForm = ({ open, onOpenChange, onAddResource, vendorId }: AddRes
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add New Resource</DialogTitle>
           <DialogDescription>
@@ -233,6 +325,51 @@ const AddResourceForm = ({ open, onOpenChange, onAddResource, vendorId }: AddRes
                 </FormItem>
               )}
             />
+            
+            <div>
+              <FormLabel>Specifications</FormLabel>
+              <div className="border rounded-md p-4 mt-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {resourceSpecifications.map((spec) => (
+                    <div key={spec} className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Checkbox 
+                          id={`spec-${spec}`} 
+                          checked={selectedSpecs[spec] || false}
+                          onCheckedChange={(checked) => 
+                            handleSpecChange(spec, checked === true)
+                          }
+                        />
+                        <label 
+                          htmlFor={`spec-${spec}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          {spec}
+                        </label>
+                      </div>
+                      
+                      {selectedSpecs[spec] && (
+                        <div className="ml-6">
+                          <Input
+                            type="number"
+                            min="1"
+                            placeholder="Quantity"
+                            value={specQuantities[spec] || ""}
+                            onChange={(e) => handleQuantityChange(spec, e.target.value)}
+                            className="h-8 w-24"
+                          />
+                          {specErrors[spec] && (
+                            <p className="text-sm font-medium text-destructive mt-1">
+                              {specErrors[spec]}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
             
             <DialogFooter className="pt-4">
               <Button variant="outline" type="button" onClick={() => onOpenChange(false)}>
