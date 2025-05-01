@@ -8,6 +8,7 @@ import { Resource, Vendor } from "@/types/vendor";
 import { getVendorById } from "@/data/mockVendorData";
 import { useState } from "react";
 import { Check, Box, Construction, Truck, HardHat, Wrench, Package } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 
 interface ResourceDetailsDialogProps {
   resource: Resource | null;
@@ -55,6 +56,7 @@ const ResourceDetailsDialog = ({ resource, open, onOpenChange }: ResourceDetails
 
   // Check if resource has specifications
   const hasSpecifications = resource.specifications && 
+    typeof resource.specifications === 'object' && 
     Object.keys(resource.specifications).length > 0;
 
   return (
@@ -105,14 +107,32 @@ const ResourceDetailsDialog = ({ resource, open, onOpenChange }: ResourceDetails
             <>
               <Separator />
               <div>
-                <h3 className="font-medium mb-2">Resource Specifications</h3>
+                <h3 className="font-medium mb-2">Specifications</h3>
                 <div className="grid grid-cols-2 gap-3">
-                  {Object.entries(resource.specifications as Record<string, any>).map(([spec, quantity]) => (
-                    <div key={spec} className="flex items-center gap-2 bg-gray-50 p-2 rounded border border-gray-200">
-                      {getSpecificationIcon(spec)}
-                      <span className="font-medium">{spec}:</span> 
-                      <span className="text-vendor-dark">{quantity} units</span>
-                    </div>
+                  {Object.entries(resource.specifications as Record<string, string | number>).map(([spec, quantity]) => (
+                    <Popover key={spec}>
+                      <PopoverTrigger asChild>
+                        <div className="flex items-center gap-2 bg-gray-50 p-2 rounded border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
+                          {getSpecificationIcon(spec)}
+                          <div className="flex flex-col">
+                            <span className="font-medium">{spec}</span> 
+                            <span className="text-vendor-dark text-sm">{quantity} units</span>
+                          </div>
+                        </div>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-64 p-4">
+                        <div className="space-y-2">
+                          <h4 className="font-medium text-base">{spec} Specification</h4>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Quantity:</span>
+                            <span className="font-medium">{quantity} units</span>
+                          </div>
+                          <p className="text-sm text-muted-foreground pt-2 border-t border-gray-100">
+                            Click for more details about this specification and how it relates to the resource.
+                          </p>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                   ))}
                 </div>
               </div>
