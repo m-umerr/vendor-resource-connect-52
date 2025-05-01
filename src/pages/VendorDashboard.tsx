@@ -77,20 +77,38 @@ const VendorDashboard = () => {
       console.log("Resources fetched:", data);
       
       // Transform the data from Supabase format to our Resource interface
-      const formattedResources: Resource[] = data.map(item => ({
-        id: item.id,
-        vendorId: item.vendor_id,
-        title: item.title,
-        description: item.description,
-        category: item.category as Resource["category"],
-        price: item.price,
-        unit: item.unit as Resource["unit"],
-        availability: item.availability,
-        imageUrl: item.image_url || 'https://placehold.co/600x400?text=Resource',
-        featured: item.featured || false,
-        specifications: item.specifications,
-        createdAt: item.created_at
-      }));
+      const formattedResources: Resource[] = data.map(item => {
+        // Ensure specifications is properly formatted as a Record<string, string | number>
+        let specs: Record<string, string | number> | null = null;
+        if (item.specifications) {
+          // Convert from Json type to our expected type
+          if (typeof item.specifications === 'object') {
+            specs = item.specifications as Record<string, string | number>;
+          } else if (typeof item.specifications === 'string') {
+            try {
+              specs = JSON.parse(item.specifications);
+            } catch (e) {
+              console.error("Failed to parse specifications JSON:", e);
+              specs = null;
+            }
+          }
+        }
+        
+        return {
+          id: item.id,
+          vendorId: item.vendor_id,
+          title: item.title,
+          description: item.description,
+          category: item.category as Resource["category"],
+          price: item.price,
+          unit: item.unit as Resource["unit"],
+          availability: item.availability,
+          imageUrl: item.image_url || 'https://placehold.co/600x400?text=Resource',
+          featured: item.featured || false,
+          specifications: specs,
+          createdAt: item.created_at
+        };
+      });
       
       setResources(formattedResources);
     } catch (error: any) {
