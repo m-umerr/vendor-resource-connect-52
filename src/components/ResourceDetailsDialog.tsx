@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,8 +6,10 @@ import { toast } from "sonner";
 import { Resource, Vendor } from "@/types/vendor";
 import { getVendorById } from "@/data/mockVendorData";
 import { useState } from "react";
-import { Check, Box, Construction, Truck, HardHat, Wrench, Package } from "lucide-react";
+import { Check, Box, Construction, Truck, HardHat, Wrench, Package, Info } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "./ui/hover-card";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "./ui/tooltip";
 
 interface ResourceDetailsDialogProps {
   resource: Resource | null;
@@ -19,6 +20,7 @@ interface ResourceDetailsDialogProps {
 const ResourceDetailsDialog = ({ resource, open, onOpenChange }: ResourceDetailsDialogProps) => {
   const [isRequesting, setIsRequesting] = useState(false);
   const [hasRequested, setHasRequested] = useState(false);
+  const [activeSpec, setActiveSpec] = useState<string | null>(null);
 
   if (!resource) return null;
   
@@ -51,6 +53,72 @@ const ResourceDetailsDialog = ({ resource, open, onOpenChange }: ResourceDetails
       case 'Lumber': return <Package className="h-4 w-4" />;
       case 'Steel': return <Box className="h-4 w-4" />;
       default: return <Check className="h-4 w-4" />;
+    }
+  };
+
+  // Get detailed information about specifications
+  const getSpecificationDetails = (specType: string) => {
+    switch (specType) {
+      case 'Brick':
+        return {
+          description: "Standard building bricks for construction",
+          uses: "Walls, facades, decorative elements",
+          properties: "Durable, fire resistant, thermal mass"
+        };
+      case 'Cement':
+        return {
+          description: "Binding material used in construction",
+          uses: "Concrete production, mortar, grouting",
+          properties: "High compressive strength, water resistant"
+        };
+      case 'Crane':
+        return {
+          description: "Heavy lifting equipment for construction sites",
+          uses: "Moving materials, lifting heavy components",
+          properties: "Variable height and reach capabilities"
+        };
+      case 'Drill':
+        return {
+          description: "Power tool for making holes or driving fasteners",
+          uses: "Installing fixtures, creating openings, attachments",
+          properties: "Variable speed, reversible, multiple drill bits"
+        };
+      case 'Forklift':
+        return {
+          description: "Powered industrial truck for lifting and moving materials",
+          uses: "Loading/unloading trucks, moving palletized materials",
+          properties: "Variable lift height, different load capacities"
+        };
+      case 'Helmet':
+        return {
+          description: "Personal protective equipment for head protection",
+          uses: "Required safety equipment for all site personnel",
+          properties: "Impact resistant, adjustable fit"
+        };
+      case 'Ladder':
+        return {
+          description: "Portable climbing device with rungs",
+          uses: "Accessing elevated work areas, general height access",
+          properties: "Adjustable height, folding capability"
+        };
+      case 'Lumber':
+        return {
+          description: "Processed wood used for construction",
+          uses: "Framing, temporary structures, formwork",
+          properties: "Various dimensions, grades, and treatments"
+        };
+      case 'Steel':
+        return {
+          description: "Structural metal alloy for construction",
+          uses: "Reinforcement, structural framing, supports",
+          properties: "High tensile strength, durability, recyclable"
+        };
+      default:
+        return {
+          description: "Construction resource for building projects",
+          uses: "Various applications in construction",
+          properties: "Specific properties depend on the material"
+        };
     }
   };
 
@@ -107,33 +175,76 @@ const ResourceDetailsDialog = ({ resource, open, onOpenChange }: ResourceDetails
             <>
               <Separator />
               <div>
-                <h3 className="font-medium mb-2">Specifications</h3>
+                <div className="flex items-center gap-2 mb-3">
+                  <h3 className="font-medium">Specifications</h3>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="w-[200px] text-xs">Click on a specification to see detailed information</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
                 <div className="grid grid-cols-2 gap-3">
-                  {Object.entries(resource.specifications as Record<string, string | number>).map(([spec, quantity]) => (
-                    <Popover key={spec}>
-                      <PopoverTrigger asChild>
-                        <div className="flex items-center gap-2 bg-gray-50 p-2 rounded border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
-                          {getSpecificationIcon(spec)}
-                          <div className="flex flex-col">
-                            <span className="font-medium">{spec}</span> 
-                            <span className="text-vendor-dark text-sm">{quantity} units</span>
+                  {Object.entries(resource.specifications as Record<string, string | number>).map(([spec, quantity]) => {
+                    const details = getSpecificationDetails(spec);
+                    return (
+                      <Popover key={spec} onOpenChange={(open) => open ? setActiveSpec(spec) : setActiveSpec(null)}>
+                        <PopoverTrigger asChild>
+                          <div className={`flex items-center gap-2 p-3 rounded border cursor-pointer transition-colors ${
+                            activeSpec === spec ? 'bg-vendor-light border-vendor' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                          }`}>
+                            <div className="rounded-full p-1 bg-vendor/10">
+                              {getSpecificationIcon(spec)}
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-medium">{spec}</span> 
+                              <span className="text-vendor-dark text-sm">{quantity} units</span>
+                            </div>
                           </div>
-                        </div>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-64 p-4">
-                        <div className="space-y-2">
-                          <h4 className="font-medium text-base">{spec} Specification</h4>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Quantity:</span>
-                            <span className="font-medium">{quantity} units</span>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-72 p-4">
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-2">
+                              {getSpecificationIcon(spec)}
+                              <h4 className="font-medium text-base">{spec} Specification</h4>
+                            </div>
+                            
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Quantity:</span>
+                              <span className="font-medium">{quantity} units</span>
+                            </div>
+                            
+                            <Separator />
+                            
+                            <div className="space-y-2">
+                              <h5 className="text-sm font-medium">Description</h5>
+                              <p className="text-sm text-muted-foreground">
+                                {details.description}
+                              </p>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <h5 className="text-sm font-medium">Common Uses</h5>
+                              <p className="text-sm text-muted-foreground">
+                                {details.uses}
+                              </p>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <h5 className="text-sm font-medium">Properties</h5>
+                              <p className="text-sm text-muted-foreground">
+                                {details.properties}
+                              </p>
+                            </div>
                           </div>
-                          <p className="text-sm text-muted-foreground pt-2 border-t border-gray-100">
-                            Click for more details about this specification and how it relates to the resource.
-                          </p>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  ))}
+                        </PopoverContent>
+                      </Popover>
+                    );
+                  })}
                 </div>
               </div>
             </>
