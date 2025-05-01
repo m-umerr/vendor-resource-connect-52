@@ -9,6 +9,7 @@ import { Plus, LogOut, Edit, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import AddResourceForm from "@/components/AddResourceForm";
+import EditResourceForm from "@/components/EditResourceForm";
 
 interface Resource {
   id: string;
@@ -21,6 +22,7 @@ interface Resource {
   image_url: string;
   featured: boolean;
   created_at: string;
+  specifications?: Record<string, number>;
 }
 
 const VendorDashboard = () => {
@@ -29,6 +31,8 @@ const VendorDashboard = () => {
   const { toast } = useToast();
   const [resources, setResources] = useState<Resource[]>([]);
   const [isAddResourceOpen, setIsAddResourceOpen] = useState(false);
+  const [isEditResourceOpen, setIsEditResourceOpen] = useState(false);
+  const [currentResource, setCurrentResource] = useState<Resource | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isVendorLoading, setIsVendorLoading] = useState(true);
 
@@ -165,6 +169,11 @@ const VendorDashboard = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleEditResource = (resource: Resource) => {
+    setCurrentResource(resource);
+    setIsEditResourceOpen(true);
   };
 
   // Show loading state while checking authentication
@@ -306,7 +315,12 @@ const VendorDashboard = () => {
                       <div className="text-sm text-gray-500">{resource.availability}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-vendor-dark">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-8 w-8 p-0 text-vendor-dark"
+                        onClick={() => handleEditResource(resource)}
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button 
@@ -338,6 +352,15 @@ const VendorDashboard = () => {
         onAddResource={handleAddResource}
         vendorId={vendor?.id || null}
       />
+
+      {currentResource && (
+        <EditResourceForm
+          open={isEditResourceOpen}
+          onOpenChange={setIsEditResourceOpen}
+          onSaveResource={fetchVendorResources}
+          resource={currentResource}
+        />
+      )}
     </div>
   );
 };

@@ -107,7 +107,7 @@ const ResourceDetailsDialog = ({ resource, open, onOpenChange }: ResourceDetails
               <div>
                 <h3 className="font-medium mb-2">Resource Specifications</h3>
                 <div className="grid grid-cols-2 gap-3">
-                  {Object.entries(resource.specifications as Record<string, string>).map(([spec, quantity]) => (
+                  {Object.entries(resource.specifications as Record<string, any>).map(([spec, quantity]) => (
                     <div key={spec} className="flex items-center gap-2 bg-gray-50 p-2 rounded border border-gray-200">
                       {getSpecificationIcon(spec)}
                       <span className="font-medium">{spec}:</span> 
