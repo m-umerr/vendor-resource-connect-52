@@ -10,20 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import AddResourceForm from "@/components/AddResourceForm";
 import EditResourceForm from "@/components/EditResourceForm";
-
-interface Resource {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  price: number;
-  unit: string;
-  availability: string;
-  image_url: string;
-  featured: boolean;
-  created_at: string;
-  specifications?: Record<string, number>;
-}
+import { Resource } from "@/types/vendor";
 
 const VendorDashboard = () => {
   const { user, vendor, signOut, loadVendorProfile } = useAuth();
@@ -88,7 +75,24 @@ const VendorDashboard = () => {
       }
 
       console.log("Resources fetched:", data);
-      setResources(data || []);
+      
+      // Transform the data from Supabase format to our Resource interface
+      const formattedResources: Resource[] = data.map(item => ({
+        id: item.id,
+        vendorId: item.vendor_id,
+        title: item.title,
+        description: item.description,
+        category: item.category as Resource["category"],
+        price: item.price,
+        unit: item.unit as Resource["unit"],
+        availability: item.availability,
+        imageUrl: item.image_url || 'https://placehold.co/600x400?text=Resource',
+        featured: item.featured || false,
+        specifications: item.specifications,
+        createdAt: item.created_at
+      }));
+      
+      setResources(formattedResources);
     } catch (error: any) {
       console.error("Error fetching resources:", error);
       toast({
@@ -349,7 +353,7 @@ const VendorDashboard = () => {
       <AddResourceForm
         open={isAddResourceOpen}
         onOpenChange={setIsAddResourceOpen}
-        onAddResource={handleAddResource}
+        onAddResource={fetchVendorResources}
         vendorId={vendor?.id || null}
       />
 

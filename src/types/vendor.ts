@@ -1,4 +1,5 @@
 
+
 export type ResourceCategory = 
   | "Material" 
   | "Equipment" 
@@ -39,7 +40,7 @@ export interface Resource {
   availability: string;
   imageUrl: string;
   featured: boolean;
-  specifications?: Record<string, string>;
+  specifications?: Record<string, string | number> | null;
   createdAt: string;
 }
 
@@ -50,3 +51,4 @@ export interface ResourceFilter {
   maxPrice: number | null;
   vendorId: string | null;
 }
+

@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ResourceCategory, ResourceUnit } from "@/types/vendor";
+import { ResourceCategory, ResourceUnit, Resource } from "@/types/vendor";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,7 +48,7 @@ interface EditResourceFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSaveResource: () => void;
-  resource: any;
+  resource: Resource;
 }
 
 const EditResourceForm = ({ open, onOpenChange, onSaveResource, resource }: EditResourceFormProps) => {
@@ -67,7 +67,7 @@ const EditResourceForm = ({ open, onOpenChange, onSaveResource, resource }: Edit
       price: resource?.price || 0,
       unit: resource?.unit || "Each",
       availability: resource?.availability || "In stock",
-      imageUrl: resource?.image_url || "",
+      imageUrl: resource?.imageUrl || "",
     }
   });
 
@@ -81,7 +81,7 @@ const EditResourceForm = ({ open, onOpenChange, onSaveResource, resource }: Edit
         price: resource.price || 0,
         unit: resource.unit as ResourceUnit,
         availability: resource.availability || "",
-        imageUrl: resource.image_url || "",
+        imageUrl: resource.imageUrl || "",
       });
 
       // Initialize specifications
@@ -91,7 +91,12 @@ const EditResourceForm = ({ open, onOpenChange, onSaveResource, resource }: Edit
       if (resource.specifications) {
         Object.entries(resource.specifications).forEach(([spec, quantity]) => {
           specs[spec] = true;
-          quantities[spec] = Number(quantity);
+          // Handle both number and string values for quantity
+          if (typeof quantity === 'string') {
+            quantities[spec] = parseFloat(quantity) || 0;
+          } else {
+            quantities[spec] = quantity as number;
+          }
         });
       }
 
@@ -187,7 +192,7 @@ const EditResourceForm = ({ open, onOpenChange, onSaveResource, resource }: Edit
           price: values.price,
           unit: values.unit,
           availability: values.availability,
-          image_url: values.imageUrl || resource.image_url,
+          image_url: values.imageUrl || resource.imageUrl,
           specifications: specifications,
           updated_at: new Date().toISOString()
         })
