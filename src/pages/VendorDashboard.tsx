@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -371,7 +370,7 @@ const VendorDashboard = () => {
       <AddResourceForm
         open={isAddResourceOpen}
         onOpenChange={setIsAddResourceOpen}
-        onAddResource={fetchVendorResources}
+        onAddResource={handleAddResource}
         vendorId={vendor?.id || null}
       />
 

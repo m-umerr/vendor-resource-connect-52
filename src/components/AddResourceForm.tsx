@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -147,9 +146,7 @@ const AddResourceForm = ({ open, onOpenChange, onAddResource, vendorId }: AddRes
         }
       });
 
-      // In a real app, this would send data to an API
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      
+      // Pass the resource data to the parent component
       onAddResource({
         ...values,
         specifications
