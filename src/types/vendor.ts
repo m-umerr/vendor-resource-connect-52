@@ -39,7 +39,7 @@ export interface Resource {
   availability: string;
   imageUrl: string;
   featured: boolean;
-  specifications?: Record<string, string | number> | string | null;
+  specifications: Record<string, string | number> | null;
   createdAt: string;
 }
 

@@ -123,29 +123,15 @@ const ResourceDetailsDialog = ({ resource, open, onOpenChange }: ResourceDetails
     }
   };
 
-  // Check if resource has specifications and ensure it's properly parsed
+  // Check if resource has specifications and ensure it's properly processed
   const hasSpecifications = () => {
     if (!resource.specifications) return false;
     
-    // If it's already an object
     if (typeof resource.specifications === 'object' && 
         !Array.isArray(resource.specifications) && 
         resource.specifications !== null &&
         Object.keys(resource.specifications).length > 0) {
       return true;
-    }
-    
-    // If it's a string that needs parsing (from Supabase)
-    if (typeof resource.specifications === 'string') {
-      try {
-        const parsed = JSON.parse(resource.specifications);
-        return typeof parsed === 'object' && 
-               !Array.isArray(parsed) && 
-               parsed !== null &&
-               Object.keys(parsed).length > 0;
-      } catch (e) {
-        return false;
-      }
     }
     
     return false;
@@ -161,21 +147,18 @@ const ResourceDetailsDialog = ({ resource, open, onOpenChange }: ResourceDetails
       return resource.specifications;
     }
     
-    if (typeof resource.specifications === 'string') {
-      try {
-        return JSON.parse(resource.specifications);
-      } catch (e) {
-        return {};
-      }
-    }
-    
     return {};
   };
 
-  // Check if the resource has specifications
+  // Check if the resource has valid specifications
   const specExists = hasSpecifications();
   // Get specifications as an object
   const specifications = getSpecifications();
+
+  // Debug log to check what's happening with specifications
+  console.log("Resource specs:", resource.specifications);
+  console.log("specExists:", specExists);
+  console.log("specifications:", specifications);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
