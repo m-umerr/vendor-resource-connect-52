@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -122,10 +123,59 @@ const ResourceDetailsDialog = ({ resource, open, onOpenChange }: ResourceDetails
     }
   };
 
-  // Check if resource has specifications
-  const hasSpecifications = resource.specifications && 
-    typeof resource.specifications === 'object' && 
-    Object.keys(resource.specifications).length > 0;
+  // Check if resource has specifications and ensure it's properly parsed
+  const hasSpecifications = () => {
+    if (!resource.specifications) return false;
+    
+    // If it's already an object
+    if (typeof resource.specifications === 'object' && 
+        !Array.isArray(resource.specifications) && 
+        resource.specifications !== null &&
+        Object.keys(resource.specifications).length > 0) {
+      return true;
+    }
+    
+    // If it's a string that needs parsing (from Supabase)
+    if (typeof resource.specifications === 'string') {
+      try {
+        const parsed = JSON.parse(resource.specifications);
+        return typeof parsed === 'object' && 
+               !Array.isArray(parsed) && 
+               parsed !== null &&
+               Object.keys(parsed).length > 0;
+      } catch (e) {
+        return false;
+      }
+    }
+    
+    return false;
+  };
+
+  // Get specifications as an object
+  const getSpecifications = () => {
+    if (!resource.specifications) return {};
+    
+    if (typeof resource.specifications === 'object' && 
+        !Array.isArray(resource.specifications) && 
+        resource.specifications !== null) {
+      return resource.specifications;
+    }
+    
+    if (typeof resource.specifications === 'string') {
+      try {
+        return JSON.parse(resource.specifications);
+      } catch (e) {
+        return {};
+      }
+    }
+    
+    return {};
+  };
+
+  // Check if the resource has specifications
+  const specExists = hasSpecifications();
+  // Get specifications as an object
+  const specifications = getSpecifications();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -171,7 +221,7 @@ const ResourceDetailsDialog = ({ resource, open, onOpenChange }: ResourceDetails
             </div>
           </div>
 
-          {hasSpecifications && (
+          {specExists && (
             <>
               <Separator />
               <div>
@@ -189,7 +239,7 @@ const ResourceDetailsDialog = ({ resource, open, onOpenChange }: ResourceDetails
                   </TooltipProvider>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  {Object.entries(resource.specifications as Record<string, string | number>).map(([spec, quantity]) => {
+                  {Object.entries(specifications).map(([spec, quantity]) => {
                     const details = getSpecificationDetails(spec);
                     return (
                       <Popover key={spec} onOpenChange={(open) => open ? setActiveSpec(spec) : setActiveSpec(null)}>
