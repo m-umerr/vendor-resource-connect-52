@@ -67,6 +67,7 @@ const Index = () => {
         availability: item.availability,
         imageUrl: item.image_url || 'https://placehold.co/600x400?text=Resource',
         featured: item.featured,
+        specifications: item.specifications,
         createdAt: item.created_at,
         vendor: item.vendors
       }));
