@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import ResourceCard from "@/components/ResourceCard";
@@ -56,21 +55,42 @@ const Index = () => {
       }
 
       // Convert from Supabase format to our app's format
-      const formattedResources = data.map(item => ({
-        id: item.id,
-        vendorId: item.vendor_id,
-        title: item.title,
-        description: item.description,
-        category: item.category as any,
-        price: item.price,
-        unit: item.unit as any,
-        availability: item.availability,
-        imageUrl: item.image_url || 'https://placehold.co/600x400?text=Resource',
-        featured: item.featured,
-        specifications: item.specifications,
-        createdAt: item.created_at,
-        vendor: item.vendors
-      }));
+      const formattedResources = data.map(item => {
+        // Ensure specifications is a valid Record<string, string | number> or null
+        let parsedSpecifications: Record<string, string | number> | null = null;
+        
+        if (item.specifications) {
+          // If it's a string, try to parse it
+          if (typeof item.specifications === 'string') {
+            try {
+              parsedSpecifications = JSON.parse(item.specifications);
+            } catch (e) {
+              console.error("Failed to parse specifications string:", e);
+              parsedSpecifications = null;
+            }
+          } 
+          // If it's already an object, use it directly
+          else if (typeof item.specifications === 'object' && item.specifications !== null) {
+            parsedSpecifications = item.specifications as Record<string, string | number>;
+          }
+        }
+
+        return {
+          id: item.id,
+          vendorId: item.vendor_id,
+          title: item.title,
+          description: item.description,
+          category: item.category as any,
+          price: item.price,
+          unit: item.unit as any,
+          availability: item.availability,
+          imageUrl: item.image_url || 'https://placehold.co/600x400?text=Resource',
+          featured: item.featured,
+          specifications: parsedSpecifications,
+          createdAt: item.created_at,
+          vendor: item.vendors
+        };
+      });
 
       setResources(formattedResources);
       setFilteredResources(formattedResources);
