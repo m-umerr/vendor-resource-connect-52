@@ -252,7 +252,7 @@ const ResourceDetailsDialog = ({ resource, open, onOpenChange }: ResourceDetails
                             </div>
                             <div className="flex flex-col">
                               <span className="font-medium">{spec}</span> 
-                              <span className="text-vendor-dark text-sm">{quantity} units</span>
+                              <span className="text-vendor-dark text-sm">{String(quantity)} units</span>
                             </div>
                           </div>
                         </PopoverTrigger>
@@ -265,7 +265,7 @@ const ResourceDetailsDialog = ({ resource, open, onOpenChange }: ResourceDetails
                             
                             <div className="flex justify-between">
                               <span className="text-muted-foreground">Quantity:</span>
-                              <span className="font-medium">{quantity} units</span>
+                              <span className="font-medium">{String(quantity)} units</span>
                             </div>
                             
                             <Separator />
