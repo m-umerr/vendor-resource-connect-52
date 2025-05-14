@@ -40,12 +40,24 @@ const ResourceDetailsDialog = ({ resource, open, onOpenChange }: ResourceDetails
         const costPerSpec = resource.price / totalSpecCount;
         
         for (const [specType, quantity] of specEntries) {
+          // Determine the type of resource based on specification
+          let resourceType = "Other";
+          
+          // Materials: Brick, Cement, Lumber, Steel
+          if (["Brick", "Cement", "Lumber", "Steel"].includes(specType)) {
+            resourceType = "Material";
+          } 
+          // Equipment: Crane, Drill, Forklift, Helmet, Ladder
+          else if (["Crane", "Drill", "Forklift", "Helmet", "Ladder"].includes(specType)) {
+            resourceType = "Equipment";
+          }
+          
           // Insert the resource request - storing just the specification name
           const { data, error } = await supabase
             .from('resource_requests')
             .insert({
               name: specType, // Save only the specification name
-              type: specType,
+              type: resourceType, // Set the properly categorized type
               quantity: Number(quantity),
               unit: resource.unit,
               vendor_id: resource.vendorId,
@@ -76,6 +88,7 @@ const ResourceDetailsDialog = ({ resource, open, onOpenChange }: ResourceDetails
             resource_id: resource.id,
             cost: resource.price, // Use the full resource price
             status: "Available", // Set status to "Available"
+            type: resource.category, // Use the resource category as type
           });
           
         if (error) {
