@@ -37,11 +37,11 @@ const ResourceDetailsDialog = ({ resource, open, onOpenChange }: ResourceDetails
         const specEntries = Object.entries(resource.specifications);
         
         for (const [specType, quantity] of specEntries) {
-          // Insert the resource request
+          // Insert the resource request - storing just the specification name
           const { data, error } = await supabase
             .from('resource_requests')
             .insert({
-              name: `${resource.title} - ${specType}`,
+              name: specType, // Save only the specification name
               type: specType,
               quantity: Number(quantity),
               unit: resource.unit,
@@ -64,7 +64,7 @@ const ResourceDetailsDialog = ({ resource, open, onOpenChange }: ResourceDetails
         const { data, error } = await supabase
           .from('resource_requests')
           .insert({
-            name: resource.title,
+            name: resource.title, // Use resource title when no specifications
             quantity: 1,
             unit: resource.unit,
             vendor_id: resource.vendorId,
