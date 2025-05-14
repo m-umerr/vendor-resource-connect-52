@@ -9,6 +9,72 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      resource_requests: {
+        Row: {
+          cost: number | null
+          created_at: string | null
+          day_rate: number | null
+          hour_rate: number | null
+          id: string
+          name: string
+          quantity: number
+          resource_id: string | null
+          returnable: boolean | null
+          status: string | null
+          type: string | null
+          unit: string | null
+          user_id: string | null
+          vendor_id: string | null
+        }
+        Insert: {
+          cost?: number | null
+          created_at?: string | null
+          day_rate?: number | null
+          hour_rate?: number | null
+          id?: string
+          name: string
+          quantity: number
+          resource_id?: string | null
+          returnable?: boolean | null
+          status?: string | null
+          type?: string | null
+          unit?: string | null
+          user_id?: string | null
+          vendor_id?: string | null
+        }
+        Update: {
+          cost?: number | null
+          created_at?: string | null
+          day_rate?: number | null
+          hour_rate?: number | null
+          id?: string
+          name?: string
+          quantity?: number
+          resource_id?: string | null
+          returnable?: boolean | null
+          status?: string | null
+          type?: string | null
+          unit?: string | null
+          user_id?: string | null
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resource_requests_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "resources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_requests_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resources: {
         Row: {
           availability: string

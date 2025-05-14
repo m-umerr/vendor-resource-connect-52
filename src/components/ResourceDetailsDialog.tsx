@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +10,7 @@ import { Check, Box, Construction, Truck, HardHat, Wrench, Package, Info } from 
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "./ui/hover-card";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "./ui/tooltip";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ResourceDetailsDialogProps {
   resource: Resource | null;
@@ -27,18 +27,68 @@ const ResourceDetailsDialog = ({ resource, open, onOpenChange }: ResourceDetails
   
   const vendor = getVendorById(resource.vendorId);
   
-  const handleRequest = () => {
+  const handleRequest = async () => {
     setIsRequesting(true);
     
-    // Simulate API request
-    setTimeout(() => {
-      setIsRequesting(false);
-      setHasRequested(true);
+    try {
+      // Check if we have specifications to save
+      if (resource.specifications && Object.keys(resource.specifications).length > 0) {
+        // For each specification, create a resource request in the database
+        const specEntries = Object.entries(resource.specifications);
+        
+        for (const [specType, quantity] of specEntries) {
+          // Insert the resource request
+          const { data, error } = await supabase
+            .from('resource_requests')
+            .insert({
+              name: `${resource.title} - ${specType}`,
+              type: specType,
+              quantity: Number(quantity),
+              unit: resource.unit,
+              vendor_id: resource.vendorId,
+              resource_id: resource.id,
+              // Optional fields left as null/default: cost, hour_rate, day_rate, user_id
+            });
+            
+          if (error) {
+            console.error("Error saving resource request:", error);
+            throw error;
+          }
+        }
+        
+        toast.success("Resource request sent to vendor", {
+          description: "You'll be notified when they respond."
+        });
+      } else {
+        // If there are no specifications, just create one resource request
+        const { data, error } = await supabase
+          .from('resource_requests')
+          .insert({
+            name: resource.title,
+            quantity: 1,
+            unit: resource.unit,
+            vendor_id: resource.vendorId,
+            resource_id: resource.id,
+          });
+          
+        if (error) {
+          console.error("Error saving resource request:", error);
+          throw error;
+        }
+        
+        toast.success("Resource request sent to vendor", {
+          description: "You'll be notified when they respond."
+        });
+      }
       
-      toast.success("Resource request sent to vendor", {
-        description: "You'll be notified when they respond."
+      setHasRequested(true);
+    } catch (error: any) {
+      toast.error("Failed to send request", {
+        description: error.message || "Please try again later."
       });
-    }, 1000);
+    } finally {
+      setIsRequesting(false);
+    }
   };
 
   // Helper function to get the appropriate icon for each resource type
