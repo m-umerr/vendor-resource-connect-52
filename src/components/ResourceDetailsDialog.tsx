@@ -33,8 +33,10 @@ const ResourceDetailsDialog = ({ resource, open, onOpenChange }: ResourceDetails
     try {
       // Check if we have specifications to save
       if (resource.specifications && Object.keys(resource.specifications).length > 0) {
-        // For each specification, create a resource request in the database
+        // Calculate cost per specification (distribute price equally)
         const specEntries = Object.entries(resource.specifications);
+        const totalSpecCount = specEntries.length;
+        const costPerSpec = resource.price / totalSpecCount;
         
         for (const [specType, quantity] of specEntries) {
           // Insert the resource request - storing just the specification name
@@ -47,7 +49,8 @@ const ResourceDetailsDialog = ({ resource, open, onOpenChange }: ResourceDetails
               unit: resource.unit,
               vendor_id: resource.vendorId,
               resource_id: resource.id,
-              // Optional fields left as null/default: cost, hour_rate, day_rate, user_id
+              cost: costPerSpec, // Add the calculated cost per specification
+              // Optional fields left as null/default: hour_rate, day_rate, user_id
             });
             
           if (error) {
@@ -60,7 +63,7 @@ const ResourceDetailsDialog = ({ resource, open, onOpenChange }: ResourceDetails
           description: "You'll be notified when they respond."
         });
       } else {
-        // If there are no specifications, just create one resource request
+        // If there are no specifications, just create one resource request with the full price
         const { data, error } = await supabase
           .from('resource_requests')
           .insert({
@@ -69,6 +72,7 @@ const ResourceDetailsDialog = ({ resource, open, onOpenChange }: ResourceDetails
             unit: resource.unit,
             vendor_id: resource.vendorId,
             resource_id: resource.id,
+            cost: resource.price, // Use the full resource price
           });
           
         if (error) {
