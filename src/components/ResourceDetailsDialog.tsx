@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -50,6 +51,7 @@ const ResourceDetailsDialog = ({ resource, open, onOpenChange }: ResourceDetails
               vendor_id: resource.vendorId,
               resource_id: resource.id,
               cost: costPerSpec, // Add the calculated cost per specification
+              status: "Available", // Set status to "Available"
               // Optional fields left as null/default: hour_rate, day_rate, user_id
             });
             
@@ -73,6 +75,7 @@ const ResourceDetailsDialog = ({ resource, open, onOpenChange }: ResourceDetails
             vendor_id: resource.vendorId,
             resource_id: resource.id,
             cost: resource.price, // Use the full resource price
+            status: "Available", // Set status to "Available"
           });
           
         if (error) {
